@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>매물 임장 메모</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background: #F5F7FA; color: #1a1a2e; font-size: 14px; }
+
+  .topbar { background: #1E3A5F; color: white; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+  .topbar .meta { font-size: 11px; opacity: 0.7; }
+  .export-btn { background: white; color: #1E3A5F; border: none; border-radius: 6px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .export-btn:active { opacity: 0.8; }
+
+  .summary-bar { display: flex; gap: 10px; padding: 12px 16px; background: white; border-bottom: 0.5px solid #e0e6ef; overflow-x: auto; }
+  .stat { background: #F0F4F8; border-radius: 8px; padding: 8px 14px; text-align: center; min-width: 80px; }
+  .stat-val { font-size: 18px; font-weight: 700; color: #1E3A5F; }
+  .stat-lbl { font-size: 10px; color: #7A8B9A; margin-top: 2px; }
+  .stat.done .stat-val { color: #27ae60; }
+  .stat.pending .stat-val { color: #e67e22; }
+
+  .list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  .card { background: white; border-radius: 12px; border: 0.5px solid #dde5ef; overflow: hidden; }
+  .card.lunch { background: #FFFDF0; border-color: #f5e0a0; }
+
+  .card-header { display: flex; align-items: stretch; }
+  .time-col { background: #1E3A5F; color: white; min-width: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 6px; }
+  .time-col .time { font-size: 13px; font-weight: 700; letter-spacing: -0.5px; }
+  .time-col .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.4); margin-top: 5px; }
+  .card.lunch .time-col { background: #e8c84a; color: #5a4000; }
+  .card.sub .time-col { background: #5B9BD5; }
+  .card.sub2 .time-col { background: #2E86AB; }
+
+  .card-body { flex: 1; padding: 10px 14px; }
+  .apt-name { font-size: 14px; font-weight: 700; color: #1E3A5F; margin-bottom: 4px; }
+  .card.lunch .apt-name { color: #856404; font-weight: 600; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+  .badge-sale { background: #E6F1FB; color: #0C447C; }
+  .badge-jeonse { background: #E1F5EE; color: #085041; }
+  .badge-confirmed { background: #D5F5E3; color: #1a6b3a; }
+  .price { font-size: 15px; font-weight: 700; color: #C0392B; }
+  .detail { font-size: 11px; color: #7A8B9A; margin-left: 6px; }
+  .sub-info { font-size: 11px; color: #5A6B7A; margin-bottom: 4px; }
+  .agency { font-size: 11px; color: #7A8B9A; margin-top: 4px; }
+  .gap-info { font-size: 11px; color: #2E86AB; font-weight: 500; margin-top: 3px; }
+
+  .memo-section { border-top: 0.5px solid #eef1f6; padding: 10px 14px; background: #FAFBFD; }
+  .memo-label { font-size: 10px; color: #7A8B9A; margin-bottom: 5px; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+  .memo-label i { font-size: 12px; }
+
+  .rating-row { display: flex; gap: 6px; margin-bottom: 8px; }
+  .rating-btn { border: 0.5px solid #dde5ef; background: white; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; flex: 1; text-align: center; transition: all 0.15s; }
+  .rating-btn:hover { background: #EBF4F8; }
+  .rating-btn.active-good { background: #D5F5E3; border-color: #27ae60; color: #1a6b3a; font-weight: 600; }
+  .rating-btn.active-ok { background: #FFF9E6; border-color: #e8c84a; color: #856404; font-weight: 600; }
+  .rating-btn.active-bad { background: #FDECEA; border-color: #e74c3c; color: #8b1a1a; font-weight: 600; }
+
+  textarea { width: 100%; border: 0.5px solid #dde5ef; border-radius: 8px; padding: 8px 10px; font-size: 12px; font-family: inherit; resize: vertical; min-height: 64px; background: white; color: #1a1a2e; line-height: 1.6; }
+  textarea:focus { outline: none; border-color: #2E86AB; }
+  textarea::placeholder { color: #b0bec5; }
+
+  .checklist { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .check-item { display: flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer; }
+  .check-item input { width: 13px; height: 13px; cursor: pointer; }
+  .check-item span { color: #5A6B7A; }
+
+  .saved-indicator { font-size: 10px; color: #27ae60; text-align: right; margin-top: 5px; opacity: 0; transition: opacity 0.3s; }
+  .saved-indicator.show { opacity: 1; }
+
+  .export-panel { background: white; border-radius: 12px; border: 0.5px solid #dde5ef; padding: 16px; margin: 0 16px 16px; }
+  .export-panel h3 { font-size: 13px; font-weight: 600; color: #1E3A5F; margin-bottom: 10px; }
+  .export-area { background: #F5F7FA; border: 0.5px solid #dde5ef; border-radius: 8px; padding: 12px; font-size: 11px; font-family: monospace; white-space: pre-wrap; line-height: 1.7; color: #2d3748; max-height: 300px; overflow-y: auto; }
+  .copy-btn { margin-top: 8px; width: 100%; padding: 9px; background: #1E3A5F; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .copy-btn:active { opacity: 0.85; }
+  .copy-success { color: #27ae60; font-size: 12px; text-align: center; margin-top: 6px; display: none; }
+
+  @media (max-width: 480px) {
+    .topbar h1 { font-size: 14px; }
+    .price { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="h1">📋 임장 메모 도구</div>
+    <div class="meta" id="date-display"></div>
+  </div>
+  <button class="export-btn" onclick="toggleExport()">내보내기</button>
+</div>
+
+<div class="summary-bar">
+  <div class="stat"><div class="stat-val" id="stat-total">0</div><div class="stat-lbl">전체 단지</div></div>
+  <div class="stat done"><div class="stat-val" id="stat-done">0</div><div class="stat-lbl">메모 완료</div></div>
+  <div class="stat pending"><div class="stat-val" id="stat-pending">0</div><div class="stat-lbl">미완료</div></div>
+</div>
+
+<div class="list" id="card-list"></div>
+
+<div id="export-section" style="display:none;">
+  <div class="export-panel">
+    <h3>📄 메모 내보내기 (복사 후 메모앱/문서에 붙여넣기)</h3>
+    <div class="export-area" id="export-text"></div>
+    <button class="copy-btn" onclick="copyExport()">클립보드에 복사</button>
+    <div class="copy-success" id="copy-ok">✅ 복사 완료!</div>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  { id:'apt1', time:'09:40', type:'normal', name:'힐스테이트동대구센트럴 104동', unit:'', price:'5억 6,300', area:'115C/84m²', floor:'5/35층', dir:'남서향', tag:'매매', agency:'벤처밸리힐스테이트·은하수부동산중개 010-9739-9597', gap:'갭 3.1억 (매6.1/전3.0)', note:'104동 최저가 문의. 앞 크레인 공사중, 전세빼기 어렵다고 함. 6억 이내 대체 매물 보기로.' },
+  { id:'apt2', time:'10:40', type:'normal', name:'더샵센터시티', unit:'101동 802호 / 105동 1701호', price:'5.6억 ~ 5.8억', area:'', floor:'', dir:'', tag:'전세임차', agency:'유쉘&더샵 010-4977-9355', gap:'', note:'101동 802호: 5.6억 풀에어컨\n105동 1701호: 5.8억 에2·주인거주 (2101호 대체 관람)' },
+  { id:'apt3', time:'', type:'sub', name:'동대구역 우방아이유쉘', unit:'101동 1301호 / 103동 1201호', price:'4.5억 ~ 5.35억', area:'', floor:'', dir:'', tag:'', agency:'유쉘&더샵 010-4977-9355', gap:'24평 갭1.4억 / 34평 갭1.7억', note:'101동 1301호: 4.5억 에2·주인거주\n103동 1201호: 5.35억 인테리어·풀에어컨' },
+  { id:'apt4', time:'11:30', type:'confirmed', name:'디어엘로', unit:'24평, 29평', price:'', area:'', floor:'', dir:'', tag:'확정', agency:'', gap:'', note:'' },
+  { id:'lunch', time:'12:30', type:'lunch', name:'점심', unit:'', price:'', area:'', floor:'', dir:'', tag:'', agency:'', gap:'', note:'' },
+  { id:'apt5', time:'13:30', type:'normal', name:'비스타동원 1, 2차', unit:'24평, 29평', price:'', area:'', floor:'', dir:'', tag:'예정', agency:'', gap:'', note:'13:30~14:00' },
+  { id:'apt6', time:'14:30', type:'normal', name:'벤처밸리푸르지오 101동', unit:'', price:'6억 5,000', area:'117A/84m²', floor:'6/33층', dir:'서향', tag:'매매', agency:'푸르지오행운부동산중개 010-7730-8959', gap:'갭 3.6억 (매6.6/전3.0)', note:'무피·3면개방 A타입·시스템에어컨4대·붙박이장·발코니확장' },
+  { id:'apt7', time:'15:00', type:'normal', name:'동대구역센트럴자이 (22년식)', unit:'104동·105동', price:'6억 3,000 ~ 6억 4,000', area:'113B/84m²', floor:'5~중/27층', dir:'남동향', tag:'매매', agency:'자이원부동산공인중개사', gap:'갭 3.2억 (매6.7/전3.5)', note:'104동: 6.3억 5층 입주가능·이면창·폴리싱타일·대형팬트리·중문\n105동: 6.4억 중층 앞동 트인뷰·채광굿·에어컨4대' },
+  { id:'apt8', time:'16:30', type:'normal', name:'푸르지오 브리센트', unit:'', price:'', area:'', floor:'', dir:'', tag:'', agency:'', gap:'', note:'' },
+  { id:'apt9', time:'17:30', type:'normal', name:'이안동대구 107동', unit:'', price:'4억', area:'', floor:'', dir:'', tag:'', agency:'이안단지내공인중개사 010-6516-1533', gap:'', note:'' },
+  { id:'apt10', time:'18:30', type:'normal', name:'용계푸르지오', unit:'', price:'', area:'', floor:'', dir:'', tag:'', agency:'', gap:'', note:'' },
+];
+
+const CHECKS = ['채광 좋음', '뷰 좋음', '수납 충분', '인테리어 양호', '관리 잘됨', '소음 없음', '주차 여유'];
+const RATINGS = [{ label:'관심', cls:'good' }, { label:'보통', cls:'ok' }, { label:'패스', cls:'bad' }];
+
+function loadMemos() {
+  try { return JSON.parse(localStorage.getItem('imjang_memos') || '{}'); } catch { return {}; }
+}
+function saveMemos(memos) {
+  localStorage.setItem('imjang_memos', JSON.stringify(memos));
+}
+
+let memos = loadMemos();
+
+function getMemo(id) {
+  return memos[id] || { rating: '', text: '', checks: [] };
+}
+
+function updateMemo(id, key, val) {
+  if (!memos[id]) memos[id] = { rating: '', text: '', checks: [] };
+  memos[id][key] = val;
+  saveMemos(memos);
+  updateStats();
+  showSaved(id);
+}
+
+function showSaved(id) {
+  const el = document.getElementById('saved-' + id);
+  if (!el) return;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function updateStats() {
+  const cards = DATA.filter(d => d.type !== 'lunch');
+  const done = cards.filter(d => {
+    const m = memos[d.id];
+    return m && (m.rating || m.text || (m.checks && m.checks.length));
+  });
+  document.getElementById('stat-total').textContent = cards.length;
+  document.getElementById('stat-done').textContent = done.length;
+  document.getElementById('stat-pending').textContent = cards.length - done.length;
+}
+
+function renderCards() {
+  const list = document.getElementById('card-list');
+  list.innerHTML = '';
+
+  DATA.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'card ' + (d.type === 'lunch' ? 'lunch' : d.type === 'sub' ? 'sub' : d.type === 'sub2' ? 'sub2' : '');
+
+    if (d.type === 'lunch') {
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="time-col"><div class="time">${d.time}</div></div>
+          <div class="card-body" style="display:flex;align-items:center;">
+            <span class="apt-name">🍽 점심</span>
+          </div>
+        </div>`;
+      list.appendChild(card);
+      return;
+    }
+
+    const m = getMemo(d.id);
+    const tagHtml = d.tag ? `<span class="badge ${d.tag === '매매' ? 'badge-sale' : d.tag === '전세임차' ? 'badge-jeonse' : 'badge-confirmed'}">${d.tag}</span>` : '';
+
+    const ratBtns = RATINGS.map(r =>
+      `<button class="rating-btn${m.rating === r.cls ? ' active-' + r.cls : ''}" onclick="setRating('${d.id}','${r.cls}',this)">${r.label}</button>`
+    ).join('');
+
+    const checkHtml = CHECKS.map(c => {
+      const chk = m.checks && m.checks.includes(c) ? 'checked' : '';
+      return `<label class="check-item"><input type="checkbox" ${chk} onchange="toggleCheck('${d.id}','${c}',this.checked)"><span>${c}</span></label>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="time-col">
+          <div class="time">${d.time || ''}</div>
+          ${d.time ? '' : '<div class="dot"></div>'}
+        </div>
+        <div class="card-body">
+          <div class="apt-name">${d.name}</div>
+          <div class="meta-row">${tagHtml}${d.unit ? `<span class="detail">${d.unit}</span>` : ''}</div>
+          ${d.price ? `<span class="price">${d.price}</span>` : ''}
+          ${d.area || d.floor || d.dir ? `<div class="sub-info">${[d.area,d.floor,d.dir].filter(Boolean).join(' · ')}</div>` : ''}
+          ${d.gap ? `<div class="gap-info">${d.gap}</div>` : ''}
+          ${d.note ? `<div class="sub-info" style="margin-top:4px;color:#5A6B7A;">${d.note.replace(/\n/g,'<br>')}</div>` : ''}
+          ${d.agency ? `<div class="agency">${d.agency}</div>` : ''}
+        </div>
+      </div>
+      <div class="memo-section">
+        <div class="memo-label"><i class="ti ti-pencil" aria-hidden="true"></i> 현장 메모</div>
+        <div class="rating-row">${ratBtns}</div>
+        <div class="checklist">${checkHtml}</div>
+        <textarea id="txt-${d.id}" placeholder="가격 협상 여지, 매도 사유, 현장 느낌 등 자유롭게 입력..." oninput="updateMemo('${d.id}','text',this.value)">${m.text || ''}</textarea>
+        <div class="saved-indicator" id="saved-${d.id}">저장됨</div>
+      </div>`;
+
+    list.appendChild(card);
+  });
+
+  updateStats();
+}
+
+function setRating(id, cls, btn) {
+  const m = getMemo(id);
+  const prev = m.rating;
+  const newRating = prev === cls ? '' : cls;
+  updateMemo(id, 'rating', newRating);
+  btn.parentNode.querySelectorAll('.rating-btn').forEach(b => {
+    b.className = 'rating-btn';
+  });
+  if (newRating) btn.className = 'rating-btn active-' + cls;
+}
+
+function toggleCheck(id, val, checked) {
+  const m = getMemo(id);
+  let checks = m.checks || [];
+  if (checked) { if (!checks.includes(val)) checks.push(val); }
+  else { checks = checks.filter(c => c !== val); }
+  updateMemo(id, 'checks', checks);
+}
+
+function toggleExport() {
+  const sec = document.getElementById('export-section');
+  if (sec.style.display === 'none') {
+    sec.style.display = 'block';
+    buildExport();
+  } else {
+    sec.style.display = 'none';
+  }
+}
+
+function buildExport() {
+  const today = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+  let out = `===== 매물 임장 메모 =====\n날짜: ${today}\n\n`;
+
+  DATA.filter(d => d.type !== 'lunch').forEach(d => {
+    const m = getMemo(d.id);
+    const hasData = m.rating || m.text || (m.checks && m.checks.length);
+    const ratingLabel = { good:'⭐ 관심', ok:'➡ 보통', bad:'✕ 패스' }[m.rating] || '(미평가)';
+    out += `【${d.time || '  '}】 ${d.name}`;
+    if (d.price) out += `  ${d.price}`;
+    out += '\n';
+    if (d.gap) out += `  ${d.gap}\n`;
+    out += `  평가: ${ratingLabel}\n`;
+    if (m.checks && m.checks.length) out += `  체크: ${m.checks.join(', ')}\n`;
+    if (m.text) out += `  메모: ${m.text.replace(/\n/g, '\n       ')}\n`;
+    if (!hasData) out += `  (미기입)\n`;
+    out += '\n';
+  });
+
+  document.getElementById('export-text').textContent = out;
+}
+
+function copyExport() {
+  const text = document.getElementById('export-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const ok = document.getElementById('copy-ok');
+    ok.style.display = 'block';
+    setTimeout(() => ok.style.display = 'none', 2000);
+  });
+}
+
+document.getElementById('date-display').textContent =
+  new Date().toLocaleDateString('ko-KR', { month:'long', day:'numeric', weekday:'short' }) + ' 임장';
+
+renderCards();
+</script>
+</body>
+</html>
