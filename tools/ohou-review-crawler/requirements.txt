@@ -1,0 +1,4 @@
+# API 탐색용 (1단계)
+playwright>=1.44
+# 수집용 (2단계)
+requests>=2.31
