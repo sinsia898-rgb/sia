@@ -4,3 +4,4 @@ tools/ohou-review-crawler/discovery/
 tools/ohou-review-crawler/reviews*.csv
 tools/ohou-review-crawler/reviews*.json
 tools/ohou-review-crawler/*_raw/
+tools/ohou-review-crawler/report*.html
